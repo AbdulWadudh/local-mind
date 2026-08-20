@@ -167,7 +167,7 @@ export function App(): ReactNode {
 
         {health !== null ? (
           <>
-            {tab === 'chat' ? <ChatView corpusEmpty={corpusEmpty} /> : null}
+            <ChatView corpusEmpty={corpusEmpty} className={tab === 'chat' ? '' : 'hidden'} />
             {tab === 'corpus' ? <CorpusView onCorpusChanged={() => void refresh()} /> : null}
             {tab === 'sources' ? (
               <SourcesView connectors={health.connectors} onCorpusChanged={() => void refresh()} />

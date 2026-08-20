@@ -375,7 +375,10 @@ function formatSeconds(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-export function ChatView({ corpusEmpty }: { corpusEmpty: boolean }): ReactNode {
+export function ChatView({
+  corpusEmpty,
+  className,
+}: { corpusEmpty: boolean; className?: string }): ReactNode {
   const [mode, setMode] = useState<AnswerMode>('ask');
   const [scope, setScope] = useState<string>(ALL_SOURCES);
   const [projects, setProjects] = useState<readonly ProjectSummary[] | null>(null);
@@ -560,7 +563,7 @@ export function ChatView({ corpusEmpty }: { corpusEmpty: boolean }): ReactNode {
   const elapsed = useElapsed(active?.streaming === true ? active.startedAt : undefined);
 
   return (
-    <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+    <div className={cn('grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]', className)}>
       {/* ── conversation ─────────────────────────────────────────────────── */}
       {/*
         `max-w-5xl` (64rem) is the measure control for the whole view. The
@@ -733,7 +736,7 @@ export function ChatView({ corpusEmpty }: { corpusEmpty: boolean }): ReactNode {
               }
               aria-describedby="lm-question-hint"
               className={cn(
-                'min-h-[3.25rem] flex-1 resize-none rounded-control border border-line-soft bg-inset',
+                'min-h-13 flex-1 resize-none rounded-control border border-line-soft bg-inset',
                 'px-3 py-2 text-sm leading-relaxed text-fg placeholder:text-faint',
                 'transition-colors duration-200 hover:border-line focus:border-accent focus:outline-none',
               )}
@@ -742,7 +745,7 @@ export function ChatView({ corpusEmpty }: { corpusEmpty: boolean }): ReactNode {
               // Always available: an in-flight request the user cannot stop is
               // the one state this UI must never have. The clock lives on the
               // button so the wait and the way out are the same target.
-              <Button variant="outline" onClick={stop} className="h-[3.25rem] px-3.5" aria-label="Cancel this request">
+              <Button variant="outline" onClick={stop} className="h-13 px-3.5" aria-label="Cancel this request">
                 <Square className="size-3.5" aria-hidden />
                 Cancel
                 {elapsed !== undefined ? (
@@ -755,7 +758,7 @@ export function ChatView({ corpusEmpty }: { corpusEmpty: boolean }): ReactNode {
                 onClick={submit}
                 disabled={question.trim().length === 0}
                 aria-label="Send question"
-                className="h-[3.25rem] px-3.5"
+                className="h-13 px-3.5"
               >
                 <ArrowUp className="size-4" aria-hidden />
               </Button>

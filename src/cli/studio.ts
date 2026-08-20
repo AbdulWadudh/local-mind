@@ -1,4 +1,5 @@
 import { join, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
 
 import { style } from '../core/ansi';
 import { fileExists } from '../core/fs';
@@ -10,17 +11,19 @@ import { createStudioRouter } from '../studio/router';
 import { flagBoolean, flagNumber, flagString, parseArgs } from './shared';
 
 /**
- * `bun run studio [--port 4141] [--client <dir>] [--api-only]`
+ * `bun run studio [--port 4141] [--client <dir>] [--api-only] [--dev]`
  *
  * Serves the Studio: the JSON/SSE API plus the built SPA.
  *
- * TWO MODES, AND WHY BOTH EXIST
+ * THREE MODES, AND WHY ALL EXIST
  *
  *  - Production / demo: the SPA is prebuilt into `dist/studio/client` and served
  *    from this one process. One port, no CORS, nothing to configure.
- *  - Development: run this with `--api-only` and Vite separately. Vite proxies
+ *  - Development (API only): run with `--api-only` and Vite separately. Vite proxies
  *    `/api` here, so you get hot module reloading on the UI while the API keeps
  *    its LanceDB handles open.
+ *  - Development (all-in-one): run with `--dev`. Spawns Vite dev server alongside
+ *    the API, so `bun run studio` gives you hot reload with one command.
  *
  * The client directory is resolved by *looking* for it rather than assuming,
  * because the same file runs from `src/` during development and from `dist/`
@@ -52,6 +55,7 @@ async function main(): Promise<void> {
   const args = parseArgs();
   const port = flagNumber(args, 'port') ?? 4141;
   const apiOnly = flagBoolean(args, 'api-only');
+  const dev = flagBoolean(args, 'dev') || !apiOnly;
   const { dir: clientDir, found } = await resolveClientDir(flagString(args, 'client'));
 
   const config = loadConfig();
@@ -67,8 +71,24 @@ async function main(): Promise<void> {
     `${style.dim('corpus')}  ${stats.documents} document(s), ${stats.chunks} chunk(s), ${stats.dimensions}d\n`,
   );
 
+  let viteProcess: ReturnType<typeof spawn> | null = null;
+  if (dev && !apiOnly) {
+    const vite = spawn('cmd', ['/c', 'vite', '--config', 'studio/vite.config.ts'], {
+      stdio: 'inherit',
+      cwd: process.cwd(),
+      env: { ...process.env, PORT: '5273', PATH: `${process.cwd()}\\node_modules\\.bin;${process.env.PATH}` },
+    });
+    viteProcess = vite;
+    vite.on('error', (err) => {
+      process.stderr.write(`${style.red('vite failed to start:')} ${err.message}\n`);
+    });
+    process.stderr.write(`${style.dim('vite')}    http://localhost:5273 (hot reload)\n`);
+  }
+
   if (apiOnly) {
     process.stderr.write(`${style.dim('mode')}    API only\n`);
+  } else if (dev) {
+    process.stderr.write(`${style.dim('mode')}    dev (API + Vite hot reload)\n`);
   } else if (found) {
     process.stderr.write(`${style.dim('client')}  ${clientDir}\n`);
   } else {
@@ -81,7 +101,7 @@ async function main(): Promise<void> {
   const app = createStudioRouter({
     mind,
     clientDir,
-    serveClient: !apiOnly && found,
+    serveClient: !apiOnly && !dev && found,
   });
 
   const server = Bun.serve({ port, fetch: app.fetch, idleTimeout: 255 });
@@ -93,6 +113,9 @@ async function main(): Promise<void> {
 
   const shutdown = async (): Promise<void> => {
     process.stderr.write(`\n${style.dim('shutting down…')}\n`);
+    if (viteProcess) {
+      viteProcess.kill('SIGTERM');
+    }
     await server.stop(true);
     await mind.close();
     process.exit(0);

@@ -37,6 +37,17 @@ import { createStudioRouter } from 'localmind/studio';
 Bun.serve({ port: 3000, fetch: createStudioRouter().fetch });
 ```
 
+**Studio features** (run with `bun run studio`):
+
+| Feature | Description |
+|---|---|
+| **Hot reload** | API + Vite dev server in one command (`bun run studio`) |
+| **Chat** | Three modes: Ask / Agent / Research with streaming, citations, trace panel |
+| **Markdown toggle** | Raw ↔ rendered markdown in Inspect view (code/table/mermaid) |
+| **Tab persistence** | Switching tabs doesn't cancel streaming requests |
+| **Sources** | GitHub repo analyzer + 9 service connectors |
+| **Search / Inspect** | Full retrieval inspector + model call log with prompts/responses |
+
 It is organised as four incremental stages. Each one adds capability to a single
 evolving codebase; none of them rewrites the last.
 
@@ -70,6 +81,11 @@ bun install
 ollama serve                       # in another terminal
 ollama pull nomic-embed-text       # 768-dim embeddings, ~275 MB
 ollama pull llama3.1:8b            # tool-capable chat model, ~4.9 GB
+
+# Or use OpenRouter for generation + embeddings (no local models needed):
+echo 'LOCALMIND_CHAT_PROVIDER=openrouter' >> .env
+echo 'LOCALMIND_EMBEDDING_PROVIDER=openrouter' >> .env
+echo 'OPENROUTER_API_KEY=sk-or-v1-…'      >> .env
 
 bun run doctor                     # preflight: providers, models, corpus, index
 bun run verify                     # 43 hermetic tests, no network, no models
@@ -187,7 +203,8 @@ LanceDB table (fixed-size Float32 vector + metadata) ── manifest.json
 | `bun run ask "…" [--no-stream]` | Stage 2: grounded, streamed, cited. |
 | `bun run agent "…" [--max-steps N]` | Stage 3: agentic retrieval with a step trace. |
 | `bun run research "…" [--max-rewrites N] [--max-repairs N]` | Stage 4: the full self-correcting workflow with a phase trace. |
-| `bun run studio` | Serve the Studio UI + API on :4141. |
+| `bun run studio` | Serve the Studio UI + API on :4141 with **Vite hot reload** (API + UI in one command). |
+| `bun run studio --api-only` | API only on :4141 (for separate Vite dev server via `studio:dev`). |
 | `bun run studio:dev` | Vite HMR on :5273, proxying `/api` to :4141. |
 | `bun run typecheck:all` | `tsc --noEmit` for the library and the Studio client. |
 | `bun run build` | JS bundles, `.d.ts` with rewritten extensions, and the SPA. |
@@ -206,7 +223,8 @@ actually change behaviour:
 | Variable | Default | Effect |
 |---|---|---|
 | `LOCALMIND_CHAT_PROVIDER` | `ollama` | `ollama` or `openrouter` |
-| `LOCALMIND_EMBEDDING_MODEL` | `nomic-embed-text` | Changing this **requires** `--rebuild` |
+| `LOCALMIND_EMBEDDING_PROVIDER` | `openrouter` | `ollama` or `openrouter` |
+| `LOCALMIND_EMBEDDING_MODEL` | `nvidia/nemotron-3-embed-1b:free` | Changing this **requires** `--rebuild` |
 | `LOCALMIND_CHUNK_CHARS` / `_OVERLAP` | `1200` / `180` | Chunk geometry; also requires `--rebuild` |
 | `LOCALMIND_TOP_K` / `_MIN_SCORE` | `6` / `0.25` | Retrieval breadth and the abstention threshold |
 | `LOCALMIND_MAX_CONTEXT_TOKENS` | `3000` | Hard budget for assembled context |
@@ -236,6 +254,8 @@ each file's header comment explains *why* it exists, not just what it does:
 | Vector store | `@lancedb/lancedb` | 0.37.x |
 | Arrow | `apache-arrow` | 18.x (LanceDB peer range is `>=15 <=18.1`) |
 | Schemas | `zod` | 4.x |
+| UI (Studio) | React + Vite + Tailwind v4 | 19.x / 8.x / 4.x |
+| Design system | shadcn `b78kmlQqEl` preset | — |
 
 AI SDK 7 renamed several primitives. If you are porting older code:
 `system:` → `instructions:`, `stepCountIs` → `isStepCount`, `Agent` →

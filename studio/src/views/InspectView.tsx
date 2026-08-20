@@ -5,7 +5,9 @@ import {
   BadgeCheck,
   Bot,
   Cloud,
+  Code,
   Copy,
+  FileText,
   HardDrive,
   Radio,
   RefreshCw,
@@ -20,6 +22,7 @@ import type { ModelCallRecord, ModelCallStage, ModelCallStats } from '@localmind
 import { api, ApiError } from '../lib/api';
 import { cn } from '../lib/cn';
 import { Badge, Button, Empty, ErrorNote, Input, Panel, SkeletonRows, Stat } from '../components/ui';
+import { Streamdown } from 'streamdown';
 import {
   Select,
   SelectContent,
@@ -665,6 +668,7 @@ function Block({
   tone?: 'accent' | 'info';
 }): ReactNode {
   const border = tone === 'accent' ? 'border-accent/30' : tone === 'info' ? 'border-info/30' : 'border-line-soft';
+  const [showRawMarkdown, setShowRawMarkdown] = useState(false);
 
   return (
     <div className={cn('rounded-control border bg-inset/40', border)}>
@@ -673,11 +677,27 @@ function Block({
         {subtitle !== undefined ? <span className="text-[10px] text-faint">{subtitle}</span> : null}
         <span className="flex-1" />
         <span className="font-mono text-[10px] tnum text-faint">{text.length.toLocaleString()} chars</span>
-        <CopyButton label={`Copy ${title}`} text={text} compact />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowRawMarkdown((v) => !v)}
+          aria-label={showRawMarkdown ? 'Switch to rendered markdown' : 'Switch to raw markdown'}
+          className="text-muted hover:text-fg"
+        >
+          {showRawMarkdown ? <FileText className="size-3.5" aria-hidden /> : <Code className="size-3.5" aria-hidden />}
+        </Button>
       </div>
-      <pre className="lm-wrap-any max-h-96 overflow-y-auto whitespace-pre-wrap px-2.5 py-2 text-xs leading-relaxed text-fg">
-        {text}
-      </pre>
+      <div className="px-2.5 py-2">
+        {showRawMarkdown ? (
+          <Streamdown className="lm-markdown" mode="static" parseIncompleteMarkdown controls={{ code: true, table: true, mermaid: true }}>
+            {text}
+          </Streamdown>
+        ) : (
+          <pre className="lm-wrap-any max-h-96 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-fg">
+            {text}
+          </pre>
+        )}
+      </div>
     </div>
   );
 }

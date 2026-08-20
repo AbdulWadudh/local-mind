@@ -6,6 +6,8 @@ import {
   Bot,
   ChevronRight,
   CircleSlash,
+  Code,
+  FileText,
   Globe,
   Layers,
   MessageSquare,
@@ -946,6 +948,7 @@ function TurnCard({
 }): ReactNode {
   const done = turn.done;
   const modeSpec = MODES.find((entry) => entry.mode === turn.mode);
+  const [showRawMarkdown, setShowRawMarkdown] = useState(false);
 
   // Memoised on `onCite`, which is itself stable — so the override object does
   // not change identity every render and force Streamdown to re-render the whole
@@ -1056,26 +1059,44 @@ function TurnCard({
           ) : null}
 
           {turn.answer.length > 0 ? (
-            <div className="lm-lift rounded-panel border border-line-soft bg-surface px-5 py-4">
-              {/*
-                `mode="streaming"` + parseIncompleteMarkdown is why this renders
-                cleanly mid-stream: an unterminated code fence or a half-written
-                table would otherwise flicker as raw text until it closed.
-                `allowedTags` lets the citation chips through sanitisation.
-              */}
-              <Streamdown
-                className="lm-markdown"
-                mode={turn.streaming ? 'streaming' : 'static'}
-                parseIncompleteMarkdown
-                components={components}
-                linkSafety={LINK_SAFETY}
-                controls={{ code: true, table: true, mermaid: true }}
-              >
-                {withCitationChips(
-                  turn.answer,
-                  turn.citations.map((citation) => citation.label),
+            <div className="lm-lift rounded-panel border border-line-soft bg-surface">
+              <div className="flex items-center justify-between border-b border-line-soft px-4 py-2.5 bg-inset/50">
+                <span className="font-mono text-[10px] text-muted">Answer</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRawMarkdown((v) => !v)}
+                  aria-label={showRawMarkdown ? 'Switch to rendered markdown' : 'Switch to raw markdown'}
+                  className="text-muted hover:text-fg"
+                >
+                  {showRawMarkdown ? (
+                    <FileText className="size-3.5" aria-hidden />
+                  ) : (
+                    <Code className="size-3.5" aria-hidden />
+                  )}
+                </Button>
+              </div>
+              <div className="px-5 py-4">
+                {showRawMarkdown ? (
+                  <pre className="font-mono text-[12px] leading-relaxed text-fg whitespace-pre-wrap overflow-x-auto">
+                    <code>{turn.answer}</code>
+                  </pre>
+                ) : (
+                  <Streamdown
+                    className="lm-markdown"
+                    mode={turn.streaming ? 'streaming' : 'static'}
+                    parseIncompleteMarkdown
+                    components={components}
+                    linkSafety={LINK_SAFETY}
+                    controls={{ code: true, table: true, mermaid: true }}
+                  >
+                    {withCitationChips(
+                      turn.answer,
+                      turn.citations.map((citation) => citation.label),
+                    )}
+                  </Streamdown>
                 )}
-              </Streamdown>
+              </div>
             </div>
           ) : null}
 

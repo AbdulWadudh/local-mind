@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Declaration-only. The runtime JS is produced by `bun build`, which
+    // resolves every specifier at bundle time, so only the .d.ts files need to
+    // care about module resolution.
+    //
+    // Resolution stays `bundler`, matching the source. Switching to NodeNext
+    // here would demand `.js` extensions on ~200 relative imports *and* changes
+    // which export conditions the `ai` package resolves to, which silently
+    // breaks generic inference in the agent settings types. Instead the emitted
+    // declarations get their extensions added by `scripts/fix-dts-extensions.ts`
+    // afterwards, so they resolve under NodeNext consumers too.
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/cli/verify.ts"]
+}

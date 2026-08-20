@@ -1,0 +1,628 @@
+/*
+ * LocalMind Studio — design tokens.
+ *
+ * PALETTE: shadcn preset `b78kmlQqEl`, applied with
+ * `bunx --bun shadcn@latest apply --preset b78kmlQqEl`.
+ *
+ * The preset ships shadcn's variable names — `--background`, `--primary`,
+ * `--muted-foreground` and so on. Those are NOT reproduced here, and the reason
+ * matters: this app already has a token vocabulary that its 600-odd utility
+ * classes are written against, and `--muted` in shadcn means a muted *surface*
+ * while `--color-muted` here means muted *text*. Importing the preset verbatim
+ * would have rendered inline code with a light-beige background and dissolved
+ * every panel border. So the preset's VALUES are mapped onto this app's token
+ * NAMES, one for one, and the mapping is recorded below.
+ *
+ * THREE PLACES THE MAPPING IS NOT ONE-TO-ONE, EACH MEASURED
+ *
+ *  1. `--primary` (#016630) is 2.80:1 on the page — fine as a button fill with
+ *     `--primary-foreground` on top (6.78:1), and unreadable as accent TEXT.
+ *     This UI uses its accent for chips, borders and labels as well as fills, so
+ *     the roles are split: `--color-primary` fills, and `--color-accent` takes
+ *     the preset's own `--sidebar-primary` (#00C950, 8.95:1) for everything that
+ *     has to be read. Both values come from the preset; only the job differs.
+ *  2. `--border` is `oklch(1 0 0 / 10%)`, which composites to 1.17:1 — invisible.
+ *     It becomes `--color-line-soft` (row dividers, where subtle is correct), and
+ *     `--color-line` takes the preset's `--ring` (4.12:1) so panels keep an edge.
+ *  3. The preset has no warning colour — its chart ramp is entirely violet. One
+ *     amber is derived at the preset's own chroma level, because "degraded but
+ *     not failed" is a state this pipeline reports constantly and red would
+ *     misreport it.
+ *
+ * Fonts are BUNDLED, not fetched. `@fontsource` emits woff2 into the built
+ * assets, so a local-first tool meant to work with no network does not blank its
+ * type waiting on fonts.googleapis.com.
+ */
+@import "tailwindcss";
+@import "streamdown/styles.css";
+
+/*
+ * Montserrat and IBM Plex Sans are the preset's choices. Both are variable
+ * fonts, so one import each covers every weight.
+ *
+ * Fira Code stays: the preset specifies no monospace, and the sans/mono split —
+ * mono for anything a machine produced, sans for anything a human wrote — is
+ * load-bearing in this UI rather than decorative.
+ */
+@import "@fontsource-variable/montserrat";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/fira-code/400.css";
+@import "@fontsource/fira-code/500.css";
+@import "@fontsource/fira-code/600.css";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/*
+ ---break---
+ */
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* ── Surfaces ───────────────────────────────────────────────────────────
+   * preset: --background / --card / --secondary, plus one derived hover step
+   * the preset does not define. Neutral at hue 286, so a cool grey.
+   */
+  --color-bg:        oklch(0.141 0.005 285.823);  /* #09090B  page      */
+  --color-surface:   oklch(0.210 0.006 285.885);  /* #18181B  panels    */
+  --color-inset:     oklch(0.274 0.006 286.033);  /* #27272A  wells     */
+  --color-raised:    oklch(0.335 0.006 286.000);  /* #36363A  hover     */
+
+  /* ── Text ────────────────────────────────────────────────────────────────
+   * preset: --foreground / --muted-foreground. The third tier is derived,
+   * because the preset's --ring is 4.12:1 and this UI puts real text at the
+   * dimmest tier — the 10px uppercase stat captions. 5.02:1 clears AA.
+   */
+  --color-fg:        oklch(0.985 0.000 0);        /* #FAFAFA — 19.1:1 */
+  --color-muted:     oklch(0.705 0.015 286.067);  /* #9F9FA9 —  7.6:1 */
+  --color-faint:     oklch(0.600 0.014 286.000);  /* #7F7F88 —  5.0:1 */
+
+  /* ── Borders ─────────────────────────────────────────────────────────────
+   * See note 2 above: --ring for the visible edge, --border for row dividers.
+   */
+  --color-line:      oklch(0.552 0.016 285.938);  /* #71717B  panel edges  */
+  --color-line-soft: oklch(1 0 0 / 10%);          /* preset --border       */
+
+  /* ── Semantics ───────────────────────────────────────────────────────────
+   *   accent   #00C950  preset --sidebar-primary  read: verified / passing
+   *   primary  #016630  preset --primary          fill: primary buttons
+   *   info     #A3B3FF  preset --chart-1          neutral-informational
+   *   warn     #F2B036  derived                   degraded / partial
+   *   danger   #FF6467  preset --destructive      failed / destructive
+   */
+  --color-accent:      oklch(0.723 0.219 149.579);  /* #00C950 — 8.95:1 */
+  --color-accent-weak: oklch(0.300 0.080 150.000);
+  --color-primary:     oklch(0.448 0.119 151.328);  /* #016630 fill only */
+  --color-primary-fg:  oklch(0.982 0.018 155.826);  /* #F0FDF4 on fill   */
+  --color-info:        oklch(0.785 0.115 274.713);  /* #A3B3FF — 9.90:1 */
+  --color-warn:        oklch(0.800 0.150 78.000);   /* #F2B036 — 10.5:1 */
+  --color-danger:      oklch(0.704 0.191 22.216);   /* #FF6467 — 6.88:1 */
+
+  --color-ring: oklch(0.723 0.219 149.579);
+
+  /* ── Type ────────────────────────────────────────────────────────────────
+   * Mono for anything a machine produced — scores, ids, paths, model names,
+   * counts. Sans for anything a human wrote. That split is the fastest way to
+   * make a data-dense screen scannable, and it never needs a legend.
+   */
+  --font-sans: "Montserrat Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "IBM Plex Sans Variable", var(--font-sans);
+  --font-mono: "Fira Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ── Radii: zero, everywhere ─────────────────────────────────────────────
+   * Square corners are the whole geometry of this theme, so the entire scale is
+   * flattened rather than just the two tokens this app names. Tailwind's own
+   * `rounded`, `rounded-sm`, `rounded-md` and so on resolve against these, so
+   * overriding only `--radius-panel` and `--radius-control` would leave the 16
+   * bare `rounded` utilities in the views quietly rounding at 4px — a mix of
+   * sharp panels and soft badges, which looks like an oversight rather than a
+   * decision.
+   *
+   * `--radius-full` is deliberately left alone: it means "a pill or a circle",
+   * which is a shape rather than a corner treatment. The three places that used
+   * it are converted to squares individually instead.
+   */
+  --radius-none: 0;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+  --radius-panel: 0;
+  --radius-control: 0;
+  --spacing-panel: 0.75rem;
+
+  /* Motion 3/10: subtle. One duration token, one easing token. */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /*
+   * A single very low-contrast wash from the top-left, over the flat base.
+   * Two reasons this is worth 3 lines of CSS: it gives a 100%-height dark page
+   * some sense of a light source, and it stops the largest surface in the app
+   * from being one dead flat fill. Both stops sit on the preset's neutral hue
+   * (286) and stay inside its own surface ramp, so it never reads as a gradient
+   * and never competes with a panel edge sitting on top of it.
+   */
+  background-color: var(--color-bg);
+  background-image: radial-gradient(
+    115% 75% at 12% -5%,
+    oklch(0.225 0.007 286) 0%,
+    oklch(0.170 0.005 286) 40%,
+    transparent 72%
+  );
+  background-attachment: fixed;
+}
+
+/*
+ * Panel lighting. One inset hairline along the top edge, at 4% white, so a
+ * panel catches the implied light from above and reads as sitting *on* the page
+ * rather than being a differently-coloured rectangle cut out of it. This single
+ * declaration is most of the difference between "flat boxes" and "surfaces".
+ */
+.lm-lift {
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.045),
+    0 1px 2px oklch(0 0 0 / 0.28);
+}
+
+/*
+ * Tabular figures everywhere a number sits in a column. Proportional digits
+ * make a relevance-score column jitter as values change, which reads as
+ * instability in exactly the place the user is comparing values.
+ */
+.tnum,
+table,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* One scrollbar treatment. A default light scrollbar on a dark panel is the
+   fastest way to make an app look unfinished. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-raised) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-inset);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-raised);
+  background-clip: content-box;
+}
+
+/* Focus: always visible, never removed. 2px accent-tinted, which clears 3:1
+   against every step of the surface ramp. */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────
+ * Subtle tier: 8-16px offsets so entrances read as a fade, not a slide.
+ */
+@keyframes lm-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lm-enter {
+  animation: lm-enter 220ms var(--ease-out-soft) both;
+}
+
+/* A ring that pulses while a response streams. Purely a status affordance, so
+   it is one of the first things reduced-motion turns off. */
+@keyframes lm-halo {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.9);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.lm-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--color-accent);
+  animation: lm-halo 1.7s var(--ease-out-soft) infinite;
+}
+
+/* Skeletons, not spinners, for anything that reserves layout. A spinner in a
+   list slot causes a jump when content arrives; a skeleton does not. */
+@keyframes lm-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.lm-skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-inset) 0%,
+    var(--color-raised) 40%,
+    var(--color-inset) 80%
+  );
+  background-size: 200% 100%;
+  animation: lm-shimmer 1.6s linear infinite;
+}
+
+/* A one-shot accent flash, used when a citation link jumps to its source card.
+   The target has to identify itself after the scroll, or the user lands in a
+   list of near-identical cards with no idea which one they asked for. */
+@keyframes lm-flash {
+  0% {
+    background-color: color-mix(in oklch, var(--color-accent) 26%, transparent);
+    border-color: var(--color-accent);
+  }
+  100% {
+    background-color: transparent;
+    border-color: transparent;
+  }
+}
+
+.lm-flash {
+  animation: lm-flash 1.5s var(--ease-out-soft) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .lm-live::after {
+    animation: none;
+    opacity: 0.5;
+  }
+  .lm-skeleton {
+    animation: none;
+    background: var(--color-inset);
+  }
+  /* The flash is the only way the jump target is identified, so reduced-motion
+     gets a static tint instead of nothing at all. */
+  .lm-flash {
+    animation: none;
+    background-color: color-mix(in oklch, var(--color-accent) 14%, transparent);
+  }
+}
+
+/* ── Answer prose ────────────────────────────────────────────────────────
+ * The answer fills its panel. An earlier 72ch cap left most of a 1350px panel
+ * empty, which reads as a bug rather than as typographic restraint; the
+ * measure is controlled by the width of the conversation *column* instead
+ * (see ChatView), so the constraint lives in the layout where it is visible.
+ *
+ * Line height is 1.75 and paragraph spacing is a full 1rem. This is prose
+ * carrying citation chips inline — denser leading makes the chips collide with
+ * the line above and turns a grounded answer into a wall.
+ */
+.lm-markdown {
+  max-width: none;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+.lm-markdown p {
+  margin: 0 0 1rem;
+}
+.lm-markdown > :last-child {
+  margin-bottom: 0;
+}
+.lm-markdown code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.lm-markdown :not(pre) > code {
+  background: var(--color-inset);
+  border: 1px solid var(--color-line-soft);
+  padding: 0.1em 0.35em;
+}
+.lm-markdown h1,
+.lm-markdown h2,
+.lm-markdown h3 {
+  /* The preset nominates IBM Plex Sans for headings. Not mono: a monospace
+     heading inside prose reads as a code block. */
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 1.75rem 0 0.75rem;
+  line-height: 1.35;
+}
+.lm-markdown > :first-child {
+  margin-top: 0;
+}
+.lm-markdown h1 { font-size: 1.05rem; }
+.lm-markdown h2 { font-size: 1rem; }
+.lm-markdown h3 { font-size: 0.95rem; }
+.lm-markdown ul,
+.lm-markdown ol {
+  margin: 0 0 1rem;
+  padding-left: 1.35rem;
+}
+.lm-markdown li {
+  margin: 0.4rem 0;
+}
+.lm-markdown li > ul,
+.lm-markdown li > ol {
+  margin: 0.4rem 0 0;
+}
+/* Tables inside an answer get their own scroll container rather than forcing
+   the whole column wide. */
+.lm-markdown table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.15rem;
+  font-size: 0.85rem;
+}
+.lm-markdown th,
+.lm-markdown td {
+  border: 1px solid var(--color-line-soft);
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+}
+.lm-markdown th {
+  background: var(--color-inset);
+  font-weight: 600;
+}
+.lm-markdown blockquote {
+  border-left: 2px solid var(--color-accent-weak);
+  margin: 0 0 1rem;
+  padding-left: 0.9rem;
+  color: var(--color-muted);
+}
+.lm-markdown a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.lm-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--color-line-soft);
+  margin: 1.5rem 0;
+}
+
+/*
+ * Citation markers — the one piece of answer text that is machine-meaningful.
+ *
+ * THE PROBLEM THIS SOLVES
+ *
+ * A bare `S1` sitting in a sentence is genuinely ambiguous: it could be a table
+ * name, a variable, a schema prefix, or a citation. Readers should not have to
+ * work that out from context, so the marker carries FOUR independent signals
+ * that it is a reference rather than prose:
+ *
+ *   1. SUPERSCRIPT position — the universal typographic convention for "this is
+ *      a reference, keep reading". This is the one doing most of the work.
+ *   2. Monospace, against the surrounding humanist sans.
+ *   3. Smaller size and tighter tracking.
+ *   4. Accent colour on a bordered chip.
+ *
+ * Deliberately NOT underlined and NOT a link colour. It is a `<button>` that
+ * focuses a panel on this page, not navigation — presenting it as a link told
+ * the user it would take them off-site, and it tripped Streamdown's
+ * external-link confirmation modal on the way.
+ */
+.lm-markdown .lm-cite,
+button.lm-cite {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.68em;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  padding: 0.22em 0.4em;
+  margin: 0 0.12em;
+
+  /* The superscript lift. `vertical-align: super` would also shrink the font a
+     second time via the UA stylesheet, so the offset is set explicitly. */
+  vertical-align: 0.32em;
+
+  background: color-mix(in oklch, var(--color-accent) 16%, transparent);
+  color: var(--color-accent);
+  border: 1px solid color-mix(in oklch, var(--color-accent) 38%, transparent);
+
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color 200ms var(--ease-out-soft),
+    border-color 200ms var(--ease-out-soft),
+    color 200ms var(--ease-out-soft);
+}
+
+.lm-markdown .lm-cite:hover,
+button.lm-cite:hover {
+  background: color-mix(in oklch, var(--color-accent) 32%, transparent);
+  border-color: var(--color-accent);
+}
+
+/*
+ * The tag whose source is currently highlighted in the panel. Filled rather than
+ * tinted, so the answer and the sidebar agree about which passage is under
+ * discussion — clicking S3 should make *both* ends of that relationship
+ * obvious, not just the far one.
+ */
+button.lm-cite[data-active='true'] {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+/* Long ids, paths and URLs must reflow rather than blow out a panel. */
+.lm-wrap-any {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+/*
+ ---break---
+ */
+:root {
+  --background:        oklch(1 0 0);
+  --foreground:        oklch(0.141 0.005 285.823);
+  --card:        oklch(1 0 0);
+  --card-foreground:        oklch(0.141 0.005 285.823);
+  --popover:        oklch(1 0 0);
+  --popover-foreground:        oklch(0.141 0.005 285.823);
+  --primary:        oklch(0.527 0.154 150.069);
+  --primary-foreground:        oklch(0.982 0.018 155.826);
+  --secondary:        oklch(0.967 0.001 286.375);
+  --secondary-foreground:        oklch(0.21 0.006 285.885);
+  --muted:        oklch(0.967 0.001 286.375);
+  --muted-foreground:        oklch(0.552 0.016 285.938);
+  --accent:        oklch(0.967 0.001 286.375);
+  --accent-foreground:        oklch(0.21 0.006 285.885);
+  --destructive:        oklch(0.577 0.245 27.325);
+  --border:        oklch(0.92 0.004 286.32);
+  --input:        oklch(0.92 0.004 286.32);
+  --ring:        oklch(0.705 0.015 286.067);
+  --chart-1:        oklch(0.785 0.115 274.713);
+  --chart-2:        oklch(0.585 0.233 277.117);
+  --chart-3:        oklch(0.511 0.262 276.966);
+  --chart-4:        oklch(0.457 0.24 277.023);
+  --chart-5:        oklch(0.398 0.195 277.366);
+  --radius:        0.875rem;
+  --sidebar:        oklch(0.985 0 0);
+  --sidebar-foreground:        oklch(0.141 0.005 285.823);
+  --sidebar-primary:        oklch(0.627 0.194 149.214);
+  --sidebar-primary-foreground:        oklch(0.982 0.018 155.826);
+  --sidebar-accent:        oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground:        oklch(0.21 0.006 285.885);
+  --sidebar-border:        oklch(0.92 0.004 286.32);
+  --sidebar-ring:        oklch(0.705 0.015 286.067);
+}
+/*
+ ---break---
+ */
+.dark {
+  --background:        oklch(0.141 0.005 285.823);
+  --foreground:        oklch(0.985 0 0);
+  --card:        oklch(0.21 0.006 285.885);
+  --card-foreground:        oklch(0.985 0 0);
+  --popover:        oklch(0.21 0.006 285.885);
+  --popover-foreground:        oklch(0.985 0 0);
+  --primary:        oklch(0.448 0.119 151.328);
+  --primary-foreground:        oklch(0.982 0.018 155.826);
+  --secondary:        oklch(0.274 0.006 286.033);
+  --secondary-foreground:        oklch(0.985 0 0);
+  --muted:        oklch(0.274 0.006 286.033);
+  --muted-foreground:        oklch(0.705 0.015 286.067);
+  --accent:        oklch(0.274 0.006 286.033);
+  --accent-foreground:        oklch(0.985 0 0);
+  --destructive:        oklch(0.704 0.191 22.216);
+  --border:        oklch(1 0 0 / 10%);
+  --input:        oklch(1 0 0 / 15%);
+  --ring:        oklch(0.552 0.016 285.938);
+  --chart-1:        oklch(0.785 0.115 274.713);
+  --chart-2:        oklch(0.585 0.233 277.117);
+  --chart-3:        oklch(0.511 0.262 276.966);
+  --chart-4:        oklch(0.457 0.24 277.023);
+  --chart-5:        oklch(0.398 0.195 277.366);
+  --sidebar:        oklch(0.21 0.006 285.885);
+  --sidebar-foreground:        oklch(0.985 0 0);
+  --sidebar-primary:        oklch(0.723 0.219 149.579);
+  --sidebar-primary-foreground:        oklch(0.982 0.018 155.826);
+  --sidebar-accent:        oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground:        oklch(0.985 0 0);
+  --sidebar-border:        oklch(1 0 0 / 10%);
+  --sidebar-ring:        oklch(0.552 0.016 285.938);
+}
+/*
+ ---break---
+ */
+@theme inline {
+  --color-sidebar-ring:        var(--sidebar-ring);
+  --color-sidebar-border:        var(--sidebar-border);
+  --color-sidebar-accent-foreground:        var(--sidebar-accent-foreground);
+  --color-sidebar-accent:        var(--sidebar-accent);
+  --color-sidebar-primary-foreground:        var(--sidebar-primary-foreground);
+  --color-sidebar-primary:        var(--sidebar-primary);
+  --color-sidebar-foreground:        var(--sidebar-foreground);
+  --color-sidebar:        var(--sidebar);
+  --color-chart-5:        var(--chart-5);
+  --color-chart-4:        var(--chart-4);
+  --color-chart-3:        var(--chart-3);
+  --color-chart-2:        var(--chart-2);
+  --color-chart-1:        var(--chart-1);
+  --color-input:        var(--input);
+  --color-border:        var(--border);
+  --color-destructive:        var(--destructive);
+  --color-accent-foreground:        var(--accent-foreground);
+  --color-muted-foreground:        var(--muted-foreground);
+  --color-secondary-foreground:        var(--secondary-foreground);
+  --color-secondary:        var(--secondary);
+  --color-primary-foreground:        var(--primary-foreground);
+  --color-primary:        var(--primary);
+  --color-popover-foreground:        var(--popover-foreground);
+  --color-popover:        var(--popover);
+  --color-card-foreground:        var(--card-foreground);
+  --color-card:        var(--card);
+  --color-foreground:        var(--foreground);
+  --color-background:        var(--background);
+  --radius-sm:        calc(var(--radius) * 0.6);
+  --radius-md:        calc(var(--radius) * 0.8);
+  --radius-lg:        var(--radius);
+  --radius-xl:        calc(var(--radius) * 1.4);
+  --radius-2xl:        calc(var(--radius) * 1.8);
+  --radius-3xl:        calc(var(--radius) * 2.2);
+  --radius-4xl:        calc(var(--radius) * 2.6);
+}
+/*
+ ---break---
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
